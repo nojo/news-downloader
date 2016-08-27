@@ -12,20 +12,23 @@ import (
 	"golang.org/x/net/html"
 )
 
-// GetDirectoryListing gets a listing of the children of the given url
+// GetDirectoryListing gets a listing of the children of the given url.
 func GetDirectoryListing(urlstring string) []string {
 	resp, err := http.Get(urlstring)
 	if err != nil {
 		log.Printf("Unable to get %v: %v\n", urlstring, err)
+		return nil
 	}
+	if resp.StatusCode >= 400 {
+		log.Printf("response code: %v\n", resp.StatusCode)
+		return nil
+	}
+	urlFetched := resp.Request.URL
 
 	defer resp.Body.Close()
-
 	body, _ := ioutil.ReadAll(resp.Body)
 
-	// TODO: check status code
-
-	return findLinks(urlstring, body)
+	return findLinks(urlFetched.String(), body)
 }
 
 func fileNameFromURL(file string) string {
@@ -35,6 +38,7 @@ func fileNameFromURL(file string) string {
 
 // DownloadFile downloads a file via a GET.  Any status >= 400 is considered an error.
 func DownloadFile(file string, downloadTo string) (bool, error) {
+	log.Println(file)
 	resp, err := http.Get(file)
 	if err != nil || resp.StatusCode >= 400 {
 		return false, err
