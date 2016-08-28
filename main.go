@@ -1,6 +1,7 @@
 package main
 
 import (
+	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -8,8 +9,17 @@ import (
 )
 
 func main() {
+	if len(os.Args) < 4 {
+		log.Println("usage: news-downloader <baseUrl> <tempDir> <redisHostNameAndPort>")
+		return
+	}
 	baseURL := os.Args[1]
 	tempDir := os.Args[2]
+	redisHostNamePort := os.Args[3]
+	if err := InitRedisStorage(redisHostNamePort); err != nil {
+		log.Printf("Unable to connect to redis: %v\n", err.Error())
+		return
+	}
 	dirListing := GetDirectoryListing(baseURL)
 	ProcessZipFiles(dirListing, tempDir)
 }
@@ -43,6 +53,18 @@ func ProcessZipFile(file string, downloadDir string) {
 func ProcessXMLFiles(xmlFiles []string) {
 	for _, file := range xmlFiles {
 		defer os.Remove(file)
-		log.Println(file)
+		if uploaded, _ := IsFileUploaded(file); !uploaded {
+			fileContents, err := readFile(file)
+			if err == nil {
+				AddFileToList(file, fileContents)
+			} else {
+				log.Printf("unable to read file: %v\n", err.Error())
+			}
+		}
 	}
+}
+
+func readFile(fileName string) (string, error) {
+	dat, err := ioutil.ReadFile(fileName)
+	return string(dat), err
 }
