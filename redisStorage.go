@@ -4,6 +4,9 @@ import "github.com/mediocregopher/radix.v2/redis"
 
 var client *redis.Client
 
+// a better design might be to use a hash to store both the filename and the content.  Would be easier to keep
+// in sync that way.  There's a small chance of an error when one or the other has been set.  That's hard
+// to recover from since there's no correlation between the file names and the content.
 const filenameSetName = "FILENAMES_XML"
 const xmlListName = "NEWS_XML"
 
