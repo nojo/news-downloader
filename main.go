@@ -38,9 +38,12 @@ func ProcessZipFiles(files []string, downloadDir string) {
 func ProcessZipFile(file string, downloadDir string) {
 	fileName := fileNameFromURL(file)
 	filePath := filepath.Join(downloadDir, fileName)
-	if ok, err := DownloadFile(file, filePath); !ok {
-		log.Println(err)
-		return
+	if ok, _ := DownloadFile(file, filePath); !ok {
+		// try again - I've been getting timeouts frequently
+		if ok, err := DownloadFile(file, filePath); !ok {
+			log.Println(err)
+			return
+		}
 	}
 	// remove the zip after we're done with it.
 	defer os.Remove(filePath)

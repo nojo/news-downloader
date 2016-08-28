@@ -8,13 +8,17 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"golang.org/x/net/html"
 )
 
+const httpGetTimeoutSeconds = 300
+
 // GetDirectoryListing gets a listing of the children of the given url.
 func GetDirectoryListing(urlstring string) []string {
-	resp, err := http.Get(urlstring)
+	client := http.Client{Timeout: time.Duration(httpGetTimeoutSeconds * time.Second)}
+	resp, err := client.Get(urlstring)
 	if err != nil {
 		log.Printf("Unable to get %v: %v\n", urlstring, err)
 		return nil
@@ -39,7 +43,8 @@ func fileNameFromURL(file string) string {
 // DownloadFile downloads a file via a GET.  Any status >= 400 is considered an error.
 func DownloadFile(file string, downloadTo string) (bool, error) {
 	log.Println(file)
-	resp, err := http.Get(file)
+	client := http.Client{Timeout: time.Duration(httpGetTimeoutSeconds * time.Second)}
+	resp, err := client.Get(file)
 	if err != nil || resp.StatusCode >= 400 {
 		return false, err
 	}
